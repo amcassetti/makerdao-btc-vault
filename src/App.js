@@ -69,6 +69,12 @@ const styles = () => ({
         borderRadius: 8,
         '&:hover': {
             boxShadow: 'none',
+        },
+        '&.Mui-disabled': {
+            background: '#EBEBEB',
+        },
+        '&.Mui-disabled span': {
+            color: '#757575'
         }
     },
     tabs: {
@@ -228,9 +234,11 @@ class App extends React.Component {
 
     render(){
         const { classes, store } = this.props
-        const { selectedTab, balance, transactions } = store.getState()
+        const { borrowAmount, selectedTab, balance, transactions  } = store.getState()
         const deposits = transactions.filter(t => (t.type === 'deposit'))
         const deposit = deposits[0]
+
+        const disabled = Number(borrowAmount) < 0.00011
 
         return <ThemeProvider theme={theme}><Container maxWidth="xs">
             <div className={classes.container}>
@@ -312,7 +320,7 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                        <Button size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
+                        <Button disabled={disabled} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
                             Borrow
                         </Button>
                       </Grid>
