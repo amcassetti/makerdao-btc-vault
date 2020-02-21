@@ -2,11 +2,11 @@ import RenSDK from "@renproject/ren";
 import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
-import PROXY_ABI from './abi.json'
+import PROXY_ABI from './proxyABI.json'
 
-export const PROXY_ADDRESS = '0x89f68f6d66635ee901325d21a06acf6d60f3c6a3'
-export const DIRECT_PROXY_ADDRESS = '0x483bFCFA16500a84035BcE00abF2812568e1A323'
-export const ZBTC_ADDRESS = '0xc6069e8dea210c937a846db2cebc0f58ca111f26'
+export const PROXY_ADDRESS = '0x42dc68b0186373970517c5b51ca8311cd2083a26'
+export const DIRECT_PROXY_ADDRESS = '0xe80caa2f3443341951121964b026e19a59a90812'
+export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
 export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
 
 
@@ -47,11 +47,27 @@ export const removeTx = (store, tx) => {
     window[storeString] = txs
 }
 
-export const repay = async function() {
+export const hasZBTCAllowance = async function() {
+
+}
+
+export const hasDAIAllowance = async function() {
+
+}
+
+export const burnDai = async function() {
     const { store } = this.props
-    const { repayAmount, accounts, web3 } = this.props.store.getState()
+    const { repayAmount, repayAddress, accounts, web3 } = this.props.store.getState()
+    console.log('burnDai')
     const contract = new web3.eth.Contract(PROXY_ABI, PROXY_ADDRESS)
-    const result = await contract.methods.burnDai(accounts[0], repayAmount)
+    const result = await contract.methods.burnDai(
+        accounts[0],
+        web3.utils.toWei(repayAmount),
+        web3.utils.fromAscii(repayAddress)
+    ).send({
+        from: accounts[0]
+    })
+    console.log('burnDai result', result)
 }
 
 export const completeDeposit = async function(tx) {
@@ -71,7 +87,7 @@ export const completeDeposit = async function(tx) {
         const result = await adapterContract.methods.mintDai(
             params.contractCalls[0].contractParams[0].value,
             params.contractCalls[0].contractParams[1].value,
-            params.contractCalls[0].contractParams[2].value,
+            // params.contractCalls[0].contractParams[2].value,
             params.sendAmount,
             renResponse.autogen.nhash,
             renSignature
@@ -115,11 +131,11 @@ export const initShiftIn = function(tx) {
 
         // Arguments expected for calling `deposit`
         contractParams: [
-            {
-                name: "_to",
-                type: "address",
-                value: params ? params.contractCalls[0].contractParams[0].value : walletAddress,
-            },
+            // {
+            //     name: "_to",
+            //     type: "address",
+            //     value: params ? params.contractCalls[0].contractParams[0].value : walletAddress,
+            // },
             {
                 name: "_dart",
                 type: "int",

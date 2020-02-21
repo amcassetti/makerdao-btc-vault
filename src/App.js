@@ -14,7 +14,7 @@ import UndoIcon from '@material-ui/icons/Undo';
 import RedoIcon from '@material-ui/icons/Redo';
 
 import DaiLogo from './dai-logo.png'
-import ADAPTER_ABI from './abi.json'
+import ADAPTER_ABI from './proxyABI.json'
 import theme from './theme'
 import TransactionItem from './TransactionItem'
 import { withTheme, withStyles, ThemeProvider } from '@material-ui/core/styles';
@@ -25,7 +25,7 @@ import {
     initDeposit,
     initWithdraw,
     removeTx,
-    repay,
+    burnDai,
     DAI_ADDRESS
 } from './txUtils'
 
@@ -226,7 +226,7 @@ class App extends React.Component {
     }
 
     async repay() {
-        repay.bind(this)()
+        burnDai.bind(this)()
         // const { repayAmount, accounts, web3, transactions } = this.props.store.getState()
         // const contract = new web3.eth.Contract(ADAPTER_ABI, ADAPTER_ADDRESS)
         // const result = await contract.methods.burnDai(accounts[0], repayAmount)
@@ -342,6 +342,16 @@ class App extends React.Component {
                               endAdornment: <InputAdornment position="end">
                                   DAI
                               </InputAdornment>
+                          }}
+                          inputProps={{ 'aria-label': 'bare' }}/>
+                  </Grid>
+                  <Grid item xs={12}>
+                      <TextField
+                          className={classes.inputField}
+                          variant="outlined"
+                          placeholder='BTC Address'
+                          onChange={(event) => {
+                              store.set('repayAddress', event.target.value)
                           }}
                           inputProps={{ 'aria-label': 'bare' }}/>
                   </Grid>
