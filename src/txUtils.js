@@ -47,6 +47,13 @@ export const removeTx = (store, tx) => {
     window[storeString] = txs
 }
 
+export const repay = async function() {
+    const { store } = this.props
+    const { repayAmount, accounts, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(PROXY_ABI, PROXY_ADDRESS)
+    const result = await contract.methods.burnDai(accounts[0], repayAmount)
+}
+
 export const completeDeposit = async function(tx) {
     const { store }  = this.props
     const web3 = store.get('web3')

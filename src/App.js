@@ -25,6 +25,7 @@ import {
     initDeposit,
     initWithdraw,
     removeTx,
+    repay,
     DAI_ADDRESS
 } from './txUtils'
 
@@ -225,20 +226,21 @@ class App extends React.Component {
     }
 
     async repay() {
-        const { repayAmount, accounts, web3, transactions } = this.props.store.getState()
+        repay.bind(this)()
+        // const { repayAmount, accounts, web3, transactions } = this.props.store.getState()
         // const contract = new web3.eth.Contract(ADAPTER_ABI, ADAPTER_ADDRESS)
-
         // const result = await contract.methods.burnDai(accounts[0], repayAmount)
         // console.log(result)
     }
 
     render(){
         const { classes, store } = this.props
-        const { borrowAmount, selectedTab, balance, transactions  } = store.getState()
+        const { borrowAmount, repayAmount, selectedTab, balance, transactions  } = store.getState()
         const deposits = transactions.filter(t => (t.type === 'deposit'))
         const deposit = deposits[0]
 
-        const disabled = Number(borrowAmount) < 0.00011
+        const canBorrow = Number(borrowAmount) > 0.00010001
+        const canRepay = Number(repayAmount / 10000) > 0.00010001
 
         return <ThemeProvider theme={theme}><Container maxWidth="xs">
             <div className={classes.container}>
@@ -246,7 +248,7 @@ class App extends React.Component {
                     <img src={DaiLogo} />
                     <p className={classes.balance}>{balance} DAI</p>
                 </Grid>
-                {/*<Grid item xs={12} className={classes.tabs}>
+                {<Grid item xs={12} className={classes.tabs}>
                     <Tabs
                       orientation="horizontal"
                       variant="fullWidth"
@@ -259,8 +261,8 @@ class App extends React.Component {
                       <Tab label="Borrow DAI" icon={<UndoIcon />} />
                       <Tab label="Repay DAI" icon={<RedoIcon />} />
                     </Tabs>
-                </Grid>*/}
-                {deposits.length ? <Grid item xs={12} className={classes.transaction}>
+                </Grid>}
+                {deposits.length && selectedTab === 0 ? <Grid item xs={12} className={classes.transaction}>
                     <TransactionItem
                         key={0}
                         store={store}
@@ -320,14 +322,14 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                        <Button disabled={disabled} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
+                        <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
                             Borrow
                         </Button>
                       </Grid>
                       <Grid item xs={12}>
                       </Grid>
                 </Grid>}
-                {/*selectedTab === 1 && <Grid className={classes.section} container>
+                {selectedTab === 1 && <Grid className={classes.section} container>
                   <Grid item xs={12}>
                       <TextField
                           className={classes.inputField}
@@ -344,11 +346,11 @@ class App extends React.Component {
                           inputProps={{ 'aria-label': 'bare' }}/>
                   </Grid>
                   <Grid item xs={12}>
-                    <Button size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
+                    <Button disabled={!canRepay} size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
                         Repay
                     </Button>
                   </Grid>
-                </Grid>*/}
+                </Grid>}
             </div>
 
         </Container></ThemeProvider>
