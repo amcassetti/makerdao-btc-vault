@@ -21,6 +21,9 @@ import { withTheme, withStyles, ThemeProvider } from '@material-ui/core/styles';
 import { createStore, withStore } from '@spyna/react-store'
 
 import {
+    getDAIAllowance,
+    getZBTCAllowance,
+    setZBTCAllowance,
     initMonitoring,
     initDeposit,
     initWithdraw,
@@ -99,11 +102,20 @@ const styles = () => ({
     },
     transaction: {
         padding: theme.spacing(2)
+    },
+    allowances: {
+        padding: theme.spacing(2),
+        '& button': {
+            marginBottom: theme.spacing(2)
+        }
     }
 })
 
 const initialState = {
     'balance': '0.000000',
+    'daiAllowance': '',
+    'zbtcAllowance': '',
+    'zbtcAllowanceRequesting': false,
     'web3': null,
     'walletType': '',
     'walletAddress': '',
@@ -140,10 +152,12 @@ class App extends React.Component {
         }
 
         initMonitoring.bind(this)()
-        this.watchBalance.bind(this)()
+        this.watchWalletData.bind(this)()
+
+
     }
 
-    async updateBalance() {
+    async updateWalletData() {
         const store = this.props.store
 
         const web3 = store.get('web3')
@@ -157,12 +171,18 @@ class App extends React.Component {
         const balance = await contract.methods.balanceOf(walletAddress).call();
 
         store.set('balance', Number(web3.utils.fromWei(balance)).toFixed(6))
+
+        const daiAllowance = await getDAIAllowance.bind(this)()
+        const zbtcAllowance = await getZBTCAllowance.bind(this)()
+
+        store.set('daiAllowance', daiAllowance)
+        store.set('zbtcAllowance', zbtcAllowance)
     }
 
-    async watchBalance() {
-        await this.updateBalance.bind(this)();
+    async watchWalletData() {
+        await this.updateWalletData.bind(this)();
         setInterval(() => {
-            this.updateBalance.bind(this)();
+            this.updateWalletData.bind(this)();
         }, 10 * 1000);
     }
 
@@ -233,14 +253,33 @@ class App extends React.Component {
         // console.log(result)
     }
 
+    async allowZbtc() {
+        setZBTCAllowance.bind(this)()
+    }
+
     render(){
         const { classes, store } = this.props
-        const { borrowAmount, repayAmount, selectedTab, balance, transactions  } = store.getState()
+        const {
+            borrowAmount,
+            repayAmount,
+            selectedTab,
+            balance,
+            daiAllowance,
+            zbtcAllowance,
+            zbtcAllowanceRequesting,
+            transactions
+        } = store.getState()
         const deposits = transactions.filter(t => (t.type === 'deposit'))
         const deposit = deposits[0]
 
+        const hasDAIAllowance = Number(daiAllowance) > Number(borrowAmount)
+        const hasZBTCAllowance = Number(zbtcAllowance) > Number(borrowAmount)
+        const hasAllowances = hasDAIAllowance && hasZBTCAllowance
+
         const canBorrow = Number(borrowAmount) > 0.00010001
         const canRepay = Number(repayAmount / 10000) > 0.00010001
+
+        console.log(store.getState())
 
         return <ThemeProvider theme={theme}><Container maxWidth="xs">
             <div className={classes.container}>
@@ -248,7 +287,25 @@ class App extends React.Component {
                     <img src={DaiLogo} />
                     <p className={classes.balance}>{balance} DAI</p>
                 </Grid>
-                {<Grid item xs={12} className={classes.tabs}>
+                {/*!hasAllowances && <Grid item xs={12} className={classes.allowances}>
+                    <Button disabled={false}
+                        size='large'
+                        variant="contained"
+                        className={classes.button}
+                        color="primary"
+                        onClick={this.repay.bind(this)}>
+                        Allow zBTC contact
+                    </Button>
+                    <Button disabled={false}
+                        size='large'
+                        variant="contained"
+                        className={classes.button}
+                        color="primary"
+                        onClick={this.repay.bind(this)}>
+                        Allow DAI contact
+                    </Button>
+                </Grid>*/}
+                {/*<Grid item xs={12} className={classes.tabs}>
                     <Tabs
                       orientation="horizontal"
                       variant="fullWidth"
@@ -261,7 +318,7 @@ class App extends React.Component {
                       <Tab label="Borrow DAI" icon={<UndoIcon />} />
                       <Tab label="Repay DAI" icon={<RedoIcon />} />
                     </Tabs>
-                </Grid>}
+                </Grid>*/}
                 {deposits.length && selectedTab === 0 ? <Grid item xs={12} className={classes.transaction}>
                     <TransactionItem
                         key={0}
@@ -278,6 +335,7 @@ class App extends React.Component {
                 {selectedTab === 0 && !deposits.length && <Grid className={classes.section} container>
                       <Grid item xs={12}>
                           <TextField
+                              disabled={!hasZBTCAllowance}
                               className={classes.inputField}
                               variant="outlined"
                               placeholder='BTC Deposit Amount'
@@ -322,11 +380,16 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                        <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
+                        {hasZBTCAllowance ? <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
                             Borrow
-                        </Button>
-                      </Grid>
-                      <Grid item xs={12}>
+                        </Button> : <Button disabled={zbtcAllowanceRequesting}
+                            size='large'
+                            variant="contained"
+                            className={classes.button}
+                            color="primary"
+                            onClick={this.allowZbtc.bind(this)}>
+                            {zbtcAllowanceRequesting ? 'Requesting...' : 'Allow zBTC contract'}
+                        </Button>}
                       </Grid>
                 </Grid>}
                 {selectedTab === 1 && <Grid className={classes.section} container>

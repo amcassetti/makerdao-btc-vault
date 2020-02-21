@@ -125,20 +125,20 @@ class TransactionItem extends React.Component {
             } else if (awaiting === 'btc-settle') {
                 title = `Waiting for confirmations (${tx.btcConfirmations}/2)`
             } else if (awaiting === 'ren-settle') {
-                title = `Deposit`
-                msg = 'Submitting to RenVM. This may take a few minutes...'
+                title = `Submitting to RenVM. This may take a few minutes...`
+                msg = ''
                 completed = 33
             } else if (awaiting === 'eth-init') {
-                title = `Collateralizing BTC on Ethereum`
+                title = `Opening CDP`
                 msg = error ? <span><a href='javascript:;' className={classes.txLink} onClick={()=>{
                     initDeposit.bind(this)(tx)
                 }}>Retry</a></span> : 'Completing deposit on Ethereum...'
                 completed = 66
             } else if (awaiting === 'eth-settle') {
-                title = `Collateralizing BTC on Ethereum`
+                title = `Opening CDP`
                 msg = error ? <span><a href='javascript:;' className={classes.txLink} onClick={()=>{
                     initDeposit.bind(this)(tx)
-                }}>Retry</a></span> : 'Collateralizing BTC and minting DAI...'
+                }}>Retry</a></span> : 'Depositing BTC and minting DAI...'
                 completed = 66
             } else if (awaiting === '') {
                 title = <span>Collateralization successful</span>

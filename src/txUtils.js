@@ -3,6 +3,7 @@ import BigNumber from "bignumber.js";
 import Web3 from "web3";
 
 import PROXY_ABI from './proxyABI.json'
+import ERC_ABI from './daiABI.json'
 
 export const PROXY_ADDRESS = '0x42dc68b0186373970517c5b51ca8311cd2083a26'
 export const DIRECT_PROXY_ADDRESS = '0xe80caa2f3443341951121964b026e19a59a90812'
@@ -47,25 +48,71 @@ export const removeTx = (store, tx) => {
     window[storeString] = txs
 }
 
-export const hasZBTCAllowance = async function() {
-
+export const getZBTCAllowance = async function() {
+    const { walletAddress, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
+    try {
+        return await contract.methods.allowance(walletAddress, DIRECT_PROXY_ADDRESS).call()
+    } catch(e) {
+        console.log(e)
+        return ''
+    }
 }
 
-export const hasDAIAllowance = async function() {
+export const getDAIAllowance = async function() {
+    const { walletAddress, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS)
+    try {
+        return await contract.methods.allowance(walletAddress, DIRECT_PROXY_ADDRESS).call()
+    } catch(e) {
+        console.log(e)
+        return ''
+    }
+}
 
+export const setZBTCAllowance = async function() {
+    const store = this.props.store
+    const { walletAddress, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
+    store.set('zbtcAllowanceRequesting', true)
+    try {
+        store.set('zbtcAllowanceRequesting', false)
+        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
+            from: walletAddress
+        })
+    } catch(e) {
+        console.log(e)
+        store.set('zbtcAllowanceRequesting', false)
+        return ''
+    }
+}
+
+export const setDAIAllowance = async function() {
+    const { walletAddress, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS)
+    try {
+        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utis.toWei(1000000)).send({
+            from: walletAddress
+        })
+    } catch(e) {
+        console.log(e)
+        return ''
+    }
 }
 
 export const burnDai = async function() {
     const { store } = this.props
-    const { repayAmount, repayAddress, accounts, web3 } = this.props.store.getState()
-    console.log('burnDai')
+    const { repayAmount, walletAddress, web3 } = this.props.store.getState()
+    const repayBTCAmount = '0.002'
+    console.log('burnDai', repayAmount, repayBTCAmount)
     const contract = new web3.eth.Contract(PROXY_ABI, PROXY_ADDRESS)
     const result = await contract.methods.burnDai(
-        accounts[0],
-        web3.utils.toWei(repayAmount),
-        web3.utils.fromAscii(repayAddress)
+        // web3.utils.toWei(repayBTCAmount),
+        // web3.utils.toWei(repayAmount),
+        '53946',
+        '35640000000000000000'
     ).send({
-        from: accounts[0]
+        from: walletAddress
     })
     console.log('burnDai result', result)
 }
@@ -85,9 +132,8 @@ export const completeDeposit = async function(tx) {
 
     try {
         const result = await adapterContract.methods.mintDai(
-            params.contractCalls[0].contractParams[0].value,
             params.contractCalls[0].contractParams[1].value,
-            // params.contractCalls[0].contractParams[2].value,
+            params.contractCalls[0].contractParams[2].value,
             params.sendAmount,
             renResponse.autogen.nhash,
             renSignature
@@ -117,25 +163,16 @@ export const initShiftIn = function(tx) {
     const borrowDaiAmount = Number((amount * 10000) * 0.66).toFixed(2)
 
     const data = {
-        // Send BTC from the Bitcoin blockchain to the Ethereum blockchain.
         sendToken: RenSDK.Tokens.BTC.Btc2Eth,
-
-        // Amount of BTC we are sending (in Satoshis)
         sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
-
-        // The contract we want to interact with
         sendTo: PROXY_ADDRESS,
-
-        // The name of the function we want to call
         contractFn: "mintDai",
-
-        // Arguments expected for calling `deposit`
         contractParams: [
-            // {
-            //     name: "_to",
-            //     type: "address",
-            //     value: params ? params.contractCalls[0].contractParams[0].value : walletAddress,
-            // },
+            {
+                name: "_sender",
+                type: "address",
+                value: params ? params.contractCalls[0].contractParams[0].value : walletAddress,
+            },
             {
                 name: "_dart",
                 type: "int",
@@ -150,10 +187,6 @@ export const initShiftIn = function(tx) {
 
         nonce: params && params.nonce ? params.nonce : RenSDK.utils.randomNonce()
     }
-
-    // if (renBtcAddress) {
-    //     shiftIn
-    // }
 
     const shiftIn = sdk.shiftIn(data)
 
