@@ -117,6 +117,7 @@ const initialState = {
     'zbtcAllowance': '',
     'zbtcAllowanceRequesting': false,
     'web3': null,
+    'walletDataLoaded': false,
     'walletType': '',
     'walletAddress': '',
     'transactions': [],
@@ -153,8 +154,6 @@ class App extends React.Component {
 
         initMonitoring.bind(this)()
         this.watchWalletData.bind(this)()
-
-
     }
 
     async updateWalletData() {
@@ -181,6 +180,7 @@ class App extends React.Component {
 
     async watchWalletData() {
         await this.updateWalletData.bind(this)();
+        this.props.store.set('walletDataLoaded', true)
         setInterval(() => {
             this.updateWalletData.bind(this)();
         }, 10 * 1000);
@@ -247,14 +247,12 @@ class App extends React.Component {
 
     async repay() {
         burnDai.bind(this)()
-        // const { repayAmount, accounts, web3, transactions } = this.props.store.getState()
-        // const contract = new web3.eth.Contract(ADAPTER_ABI, ADAPTER_ADDRESS)
-        // const result = await contract.methods.burnDai(accounts[0], repayAmount)
-        // console.log(result)
     }
 
     async allowZbtc() {
-        setZBTCAllowance.bind(this)()
+        await setZBTCAllowance.bind(this)()
+        await this.updateWalletData.bind(this)();
+        this.props.store.set('zbtcAllowanceRequesting', false)
     }
 
     render(){
@@ -267,6 +265,7 @@ class App extends React.Component {
             daiAllowance,
             zbtcAllowance,
             zbtcAllowanceRequesting,
+            walletDataLoaded,
             transactions
         } = store.getState()
         const deposits = transactions.filter(t => (t.type === 'deposit'))
@@ -380,15 +379,15 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                        {hasZBTCAllowance ? <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
-                            Borrow
-                        </Button> : <Button disabled={zbtcAllowanceRequesting}
+                        {!hasZBTCAllowance && walletDataLoaded ? <Button disabled={zbtcAllowanceRequesting}
                             size='large'
                             variant="contained"
                             className={classes.button}
                             color="primary"
                             onClick={this.allowZbtc.bind(this)}>
                             {zbtcAllowanceRequesting ? 'Requesting...' : 'Allow zBTC contract'}
+                        </Button> : <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
+                            Borrow
                         </Button>}
                       </Grid>
                 </Grid>}

@@ -76,14 +76,13 @@ export const setZBTCAllowance = async function() {
     const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
     store.set('zbtcAllowanceRequesting', true)
     try {
-        store.set('zbtcAllowanceRequesting', false)
-        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
+        await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
             from: walletAddress
         })
+        // store.set('zbtcAllowanceRequesting', false)
     } catch(e) {
         console.log(e)
-        store.set('zbtcAllowanceRequesting', false)
-        return ''
+        // store.set('zbtcAllowanceRequesting', false)
     }
 }
 
