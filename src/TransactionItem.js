@@ -41,7 +41,7 @@ const styles = () => ({
     },
     pendingSubTitle: {
         // marginBottom: theme.spacing(1),
-        fontSize: 14,
+        // fontSize: 14,
         textAlign: 'center'
     },
     progress: {
@@ -125,8 +125,8 @@ class TransactionItem extends React.Component {
             } else if (awaiting === 'btc-settle') {
                 title = `Waiting for confirmations (${tx.btcConfirmations}/2)`
             } else if (awaiting === 'ren-settle') {
-                title = `Submitting to RenVM. This may take a few minutes...`
-                msg = ''
+                title = `Submitting to RenVM`
+                msg = 'This may take a few minutes...'
                 completed = 33
             } else if (awaiting === 'eth-init') {
                 title = `Opening CDP`
@@ -183,7 +183,7 @@ class TransactionItem extends React.Component {
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
-                            <Typography variant='subtitle2' className={classes.pendingSubTitle}>
+                            <Typography variant='subtitle1' className={classes.pendingSubTitle}>
                                 <span className={classes.pendingMsg}>{msg}</span>
                                 {/*txLink && <a className={classes.txLink} target='_blank' href={txLink}>View Transaction</a>*/}
                             </Typography>

@@ -48,6 +48,28 @@ export const removeTx = (store, tx) => {
     window[storeString] = txs
 }
 
+export const updateWalletData = async function() {
+    const store = this.props.store
+
+    const web3 = store.get('web3')
+    const walletAddress = store.get('walletAddress')
+
+    if (!web3 || !walletAddress) {
+        return
+    }
+
+    const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS);
+    const balance = await contract.methods.balanceOf(walletAddress).call();
+
+    store.set('balance', Number(web3.utils.fromWei(balance)).toFixed(6))
+
+    const daiAllowance = await getDAIAllowance.bind(this)()
+    const zbtcAllowance = await getZBTCAllowance.bind(this)()
+
+    store.set('daiAllowance', daiAllowance)
+    store.set('zbtcAllowance', zbtcAllowance)
+}
+
 export const getZBTCAllowance = async function() {
     const { walletAddress, web3 } = this.props.store.getState()
     const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
@@ -72,30 +94,35 @@ export const getDAIAllowance = async function() {
 
 export const setZBTCAllowance = async function() {
     const store = this.props.store
-    const { walletAddress, web3 } = this.props.store.getState()
+    const { walletAddress, web3 } = store.getState()
     const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
     store.set('zbtcAllowanceRequesting', true)
     try {
         await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
             from: walletAddress
         })
-        // store.set('zbtcAllowanceRequesting', false)
+        await updateWalletData.bind(this)();
+        store.set('zbtcAllowanceRequesting', false)
     } catch(e) {
         console.log(e)
-        // store.set('zbtcAllowanceRequesting', false)
+        store.set('zbtcAllowanceRequesting', false)
     }
 }
 
 export const setDAIAllowance = async function() {
-    const { walletAddress, web3 } = this.props.store.getState()
+    const store = this.props.store
+    const { walletAddress, web3 } = store.getState()
     const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS)
+    store.set('daiAllowanceRequesting', true)
     try {
-        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utis.toWei(1000000)).send({
+        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
             from: walletAddress
         })
+        await updateWalletData.bind(this)();
+        store.set('daiAllowanceRequesting', false)
     } catch(e) {
         console.log(e)
-        return ''
+        store.set('daiAllowanceRequesting', false)
     }
 }
 
@@ -141,6 +168,7 @@ export const completeDeposit = async function(tx) {
         })
         console.log('result', result)
         updateTx(store, Object.assign(tx, { awaiting: '' }))
+        updateWalletData.bind(this)()
     } catch(e) {
         console.log(e)
         updateTx(store, Object.assign(tx, { error: true }))
@@ -148,42 +176,42 @@ export const completeDeposit = async function(tx) {
 }
 
 export const initShiftIn = function(tx) {
-    const { amount, renBtcAddress, params, ethSig } = tx
+    const {
+        amount,
+        daiAmount,
+        btcAddress,
+        params,
+    } = tx
     const {
         sdk,
         web3,
         walletAddress,
-        borrowAmount,
-        borrowBtcAddress
     } = this.props.store.getState()
 
     console.log('initShiftIn', tx)
-
-    const borrowDaiAmount = Number((amount * 10000) * 0.66).toFixed(2)
 
     const data = {
         sendToken: RenSDK.Tokens.BTC.Btc2Eth,
         sendAmount: Math.floor(amount * (10 ** 8)), // Convert to Satoshis
         sendTo: PROXY_ADDRESS,
         contractFn: "mintDai",
-        contractParams: [
+        contractParams: params ? params.contractCalls[0].contractParams : [
             {
                 name: "_sender",
                 type: "address",
-                value: params ? params.contractCalls[0].contractParams[0].value : walletAddress,
+                value: walletAddress,
             },
             {
                 name: "_dart",
                 type: "int",
-                value: params ? params.contractCalls[0].contractParams[1].value : web3.utils.toWei(borrowDaiAmount),
+                value: web3.utils.toWei(daiAmount),
             },
             {
                 name: "_btcAddr",
                 type: "bytes",
-                value: params ? params.contractCalls[0].contractParams[2].value : web3.utils.fromAscii(borrowBtcAddress),
+                value: web3.utils.fromAscii(btcAddress),
             },
         ],
-
         nonce: params && params.nonce ? params.nonce : RenSDK.utils.randomNonce()
     }
 
