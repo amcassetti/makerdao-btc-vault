@@ -304,7 +304,7 @@ class App extends React.Component {
                         Allow DAI contact
                     </Button>
                 </Grid>*/}
-                {/*<Grid item xs={12} className={classes.tabs}>
+                {<Grid item xs={12} className={classes.tabs}>
                     <Tabs
                       orientation="horizontal"
                       variant="fullWidth"
@@ -317,7 +317,7 @@ class App extends React.Component {
                       <Tab label="Borrow DAI" icon={<UndoIcon />} />
                       <Tab label="Repay DAI" icon={<RedoIcon />} />
                     </Tabs>
-                </Grid>*/}
+                </Grid>}
                 {deposits.length && selectedTab === 0 ? <Grid item xs={12} className={classes.transaction}>
                     <TransactionItem
                         key={0}

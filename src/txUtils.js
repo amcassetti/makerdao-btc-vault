@@ -5,8 +5,8 @@ import Web3 from "web3";
 import PROXY_ABI from './proxyABI.json'
 import ERC_ABI from './daiABI.json'
 
-export const PROXY_ADDRESS = '0x42dc68b0186373970517c5b51ca8311cd2083a26'
-export const DIRECT_PROXY_ADDRESS = '0xe80caa2f3443341951121964b026e19a59a90812'
+export const PROXY_ADDRESS = '0x572600ceb7a065d64f7f318b3f33e26692272e16'
+export const DIRECT_PROXY_ADDRESS = '0x73b06373d8f653f981ac7c551c1bae0b32e5b5ea'
 export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
 export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
 
@@ -108,8 +108,8 @@ export const burnDai = async function() {
     const result = await contract.methods.burnDai(
         // web3.utils.toWei(repayBTCAmount),
         // web3.utils.toWei(repayAmount),
-        '53946',
-        '35640000000000000000'
+        '14000',
+        '1000000000000000000'
     ).send({
         from: walletAddress
     })
