@@ -21,18 +21,15 @@ import { withTheme, withStyles, ThemeProvider } from '@material-ui/core/styles';
 import { createStore, withStore } from '@spyna/react-store'
 
 import {
-    getDAIAllowance,
-    getZBTCAllowance,
     setZBTCAllowance,
+    setDAIAllowance,
+    updateWalletData,
     initMonitoring,
     initDeposit,
-    initWithdraw,
     removeTx,
     burnDai,
     DAI_ADDRESS
 } from './txUtils'
-
-import DAI_ABI from './daiABI.json'
 
 const styles = () => ({
     container: {
@@ -114,6 +111,7 @@ const styles = () => ({
 const initialState = {
     'balance': '0.000000',
     'daiAllowance': '',
+    'daiAllowanceRequesting': false,
     'zbtcAllowance': '',
     'zbtcAllowanceRequesting': false,
     'web3': null,
@@ -124,10 +122,10 @@ const initialState = {
     'selectedTab': 0,
     'accounts': [],
     'borrowAmount': '',
-    'borrowEthAddress': '',
-    'borrowDart': '',
+    'borrowDaiAmount': '',
     'borrowBtcAddress': '2NGZrVvZG92qGYqzTLjCAewvPZ7JE8S8VxE',
     'repayAmount': '',
+    'repayBtcAmount': '',
     'repayAddress': ''
 }
 
@@ -136,12 +134,12 @@ class App extends React.Component {
         super(props)
         this.state = {}
         this.borrowDaiRef = React.createRef()
+        this.repayDaiRef = React.createRef()
     }
 
     async componentDidMount(){
         window.Web3 = Web3
         const store = this.props.store
-        // window.gjs = gatewayJS
 
         store.set('sdk', new RenSDK('testnet'))
 
@@ -156,33 +154,11 @@ class App extends React.Component {
         this.watchWalletData.bind(this)()
     }
 
-    async updateWalletData() {
-        const store = this.props.store
-
-        const web3 = store.get('web3')
-        const walletAddress = store.get('walletAddress')
-
-        if (!web3 || !walletAddress) {
-            return
-        }
-
-        const contract = new web3.eth.Contract(DAI_ABI, DAI_ADDRESS);
-        const balance = await contract.methods.balanceOf(walletAddress).call();
-
-        store.set('balance', Number(web3.utils.fromWei(balance)).toFixed(6))
-
-        const daiAllowance = await getDAIAllowance.bind(this)()
-        const zbtcAllowance = await getZBTCAllowance.bind(this)()
-
-        store.set('daiAllowance', daiAllowance)
-        store.set('zbtcAllowance', zbtcAllowance)
-    }
-
     async watchWalletData() {
-        await this.updateWalletData.bind(this)();
+        await updateWalletData.bind(this)();
         this.props.store.set('walletDataLoaded', true)
         setInterval(() => {
-            this.updateWalletData.bind(this)();
+            updateWalletData.bind(this)();
         }, 10 * 1000);
     }
 
@@ -228,9 +204,8 @@ class App extends React.Component {
     async borrow() {
         const { store } = this.props
         const borrowAmount = store.get('borrowAmount')
-        const ethAddress = store.get('accounts')[0]
-        const btcAddress = store.get('borrowBtcAddress')
-        const dart = store.get('borrowDart')
+        const borrowDaiAmount = store.get('borrowDaiAmount')
+        const borrowBtcAddress = store.get('borrowBtcAddress')
 
         const tx = {
             id: String(Math.round(Math.random() * (10 ** 8))),
@@ -239,6 +214,8 @@ class App extends React.Component {
             source: 'btc',
             dest: 'eth',
             amount: borrowAmount,
+            daiAmount: borrowDaiAmount,
+            btcAddress: borrowBtcAddress,
             error: false
         }
 
@@ -250,9 +227,11 @@ class App extends React.Component {
     }
 
     async allowZbtc() {
-        await setZBTCAllowance.bind(this)()
-        await this.updateWalletData.bind(this)();
-        this.props.store.set('zbtcAllowanceRequesting', false)
+        setZBTCAllowance.bind(this)()
+    }
+
+    async allowDai() {
+        setDAIAllowance.bind(this)()
     }
 
     render(){
@@ -260,9 +239,11 @@ class App extends React.Component {
         const {
             borrowAmount,
             repayAmount,
+            repayBtcAmount,
             selectedTab,
             balance,
             daiAllowance,
+            daiAllowanceRequesting,
             zbtcAllowance,
             zbtcAllowanceRequesting,
             walletDataLoaded,
@@ -271,12 +252,12 @@ class App extends React.Component {
         const deposits = transactions.filter(t => (t.type === 'deposit'))
         const deposit = deposits[0]
 
-        const hasDAIAllowance = Number(daiAllowance) > Number(borrowAmount)
+        const hasDAIAllowance = Number(daiAllowance) > Number(repayAmount)
         const hasZBTCAllowance = Number(zbtcAllowance) > Number(borrowAmount)
         const hasAllowances = hasDAIAllowance && hasZBTCAllowance
 
         const canBorrow = Number(borrowAmount) > 0.00010001
-        const canRepay = Number(repayAmount / 10000) > 0.00010001
+        const canRepay = Number(repayBtcAmount) > 0.00010001
 
         console.log(store.getState())
 
@@ -286,25 +267,7 @@ class App extends React.Component {
                     <img src={DaiLogo} />
                     <p className={classes.balance}>{balance} DAI</p>
                 </Grid>
-                {/*!hasAllowances && <Grid item xs={12} className={classes.allowances}>
-                    <Button disabled={false}
-                        size='large'
-                        variant="contained"
-                        className={classes.button}
-                        color="primary"
-                        onClick={this.repay.bind(this)}>
-                        Allow zBTC contact
-                    </Button>
-                    <Button disabled={false}
-                        size='large'
-                        variant="contained"
-                        className={classes.button}
-                        color="primary"
-                        onClick={this.repay.bind(this)}>
-                        Allow DAI contact
-                    </Button>
-                </Grid>*/}
-                {/*<Grid item xs={12} className={classes.tabs}>
+                {<Grid item xs={12} className={classes.tabs}>
                     <Tabs
                       orientation="horizontal"
                       variant="fullWidth"
@@ -317,7 +280,7 @@ class App extends React.Component {
                       <Tab label="Borrow DAI" icon={<UndoIcon />} />
                       <Tab label="Repay DAI" icon={<RedoIcon />} />
                     </Tabs>
-                </Grid>*/}
+                </Grid>}
                 {deposits.length && selectedTab === 0 ? <Grid item xs={12} className={classes.transaction}>
                     <TransactionItem
                         key={0}
@@ -340,9 +303,10 @@ class App extends React.Component {
                               placeholder='BTC Deposit Amount'
                               onChange={(event) => {
                                   const amt = event.target.value
+                                  const daiAmt = Number((amt * 10000) * 0.66).toFixed(2)
                                   store.set('borrowAmount', amt)
-
-                                  this.borrowDaiRef.current.value = Number((amt * 10000) * 0.66).toFixed(2)
+                                  store.set('borrowDaiAmount', daiAmt)
+                                  this.borrowDaiRef.current.value = daiAmt
                               }}
                               type='number'
                               InputProps={{
@@ -353,13 +317,6 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                          {/*<TextField
-                              className={classes.inputField}
-                              variant="outlined"
-                              placeholder='Owner BTC Address'
-                              onChange={(event) => {
-                                  store.set('borrowBtcAddress', event.target.value)
-                              }}/>*/}
                       </Grid>
                       <Grid item xs={12}>
                           <TextField
@@ -369,7 +326,6 @@ class App extends React.Component {
                               placeholder='DAI Amount'
                               inputRef={this.borrowDaiRef}
                               onChange={(event) => {
-                                  store.set('borrowDart', event.target.value)
                               }}
                               InputProps={{
                                   endAdornment: <InputAdornment position="end">
@@ -385,7 +341,7 @@ class App extends React.Component {
                             className={classes.button}
                             color="primary"
                             onClick={this.allowZbtc.bind(this)}>
-                            {zbtcAllowanceRequesting ? 'Requesting...' : 'Allow zBTC contract'}
+                            {zbtcAllowanceRequesting ? 'Requesting...' : 'Set zBTC allowance'}
                         </Button> : <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
                             Borrow
                         </Button>}
@@ -394,11 +350,17 @@ class App extends React.Component {
                 {selectedTab === 1 && <Grid className={classes.section} container>
                   <Grid item xs={12}>
                       <TextField
+                          disabled={!hasDAIAllowance}
                           className={classes.inputField}
                           variant="outlined"
                           placeholder='DAI Amount'
                           onChange={(event) => {
-                              store.set('repayAmount', event.target.value)
+                              const amt = event.target.value
+                              const btcAmt = Number((amt / 10000) * 0.66).toFixed(6)
+                              store.set('repayAmount', amt)
+                              store.set('repayBtcAmount', btcAmt)
+
+                              this.repayDaiRef.current.value = btcAmt
                           }}
                           InputProps={{
                               endAdornment: <InputAdornment position="end">
@@ -410,17 +372,30 @@ class App extends React.Component {
                   <Grid item xs={12}>
                       <TextField
                           className={classes.inputField}
+                          disabled={true}
                           variant="outlined"
-                          placeholder='BTC Address'
+                          placeholder='BTC Amount'
+                          inputRef={this.repayDaiRef}
                           onChange={(event) => {
-                              store.set('repayAddress', event.target.value)
+                          }}
+                          InputProps={{
+                              endAdornment: <InputAdornment position="end">
+                                  BTC
+                              </InputAdornment>
                           }}
                           inputProps={{ 'aria-label': 'bare' }}/>
                   </Grid>
                   <Grid item xs={12}>
-                    <Button disabled={!canRepay} size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
+                      {!hasDAIAllowance && walletDataLoaded ? <Button disabled={daiAllowanceRequesting}
+                          size='large'
+                          variant="contained"
+                          className={classes.button}
+                          color="primary"
+                          onClick={this.allowDai.bind(this)}>
+                          {daiAllowanceRequesting ? 'Requesting...' : 'Set DAI allowance'}
+                      </Button> : <Button disabled={!canRepay} size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
                         Repay
-                    </Button>
+                    </Button>}
                   </Grid>
                 </Grid>}
             </div>
