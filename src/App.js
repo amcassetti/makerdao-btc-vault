@@ -23,6 +23,7 @@ import { createStore, withStore } from '@spyna/react-store'
 import {
     setZBTCAllowance,
     setDAIAllowance,
+    setZBTCRepayAllowance,
     updateWalletData,
     initMonitoring,
     initDeposit,
@@ -114,6 +115,8 @@ const initialState = {
     'daiAllowanceRequesting': false,
     'zbtcAllowance': '',
     'zbtcAllowanceRequesting': false,
+    'zbtcRepayAllowance': '',
+    'zbtcRepayAllowanceRequesting': false,
     'web3': null,
     'walletDataLoaded': false,
     'walletType': '',
@@ -230,6 +233,10 @@ class App extends React.Component {
         setZBTCAllowance.bind(this)()
     }
 
+    async allowZbtcRepay() {
+        setZBTCRepayAllowance.bind(this)()
+    }
+
     async allowDai() {
         setDAIAllowance.bind(this)()
     }
@@ -246,6 +253,8 @@ class App extends React.Component {
             daiAllowanceRequesting,
             zbtcAllowance,
             zbtcAllowanceRequesting,
+            zbtcRepayAllowance,
+            zbtcRepayAllowanceRequesting,
             walletDataLoaded,
             transactions
         } = store.getState()
@@ -254,6 +263,7 @@ class App extends React.Component {
 
         const hasDAIAllowance = Number(daiAllowance) > Number(repayAmount)
         const hasZBTCAllowance = Number(zbtcAllowance) > Number(borrowAmount)
+        const hasZBTCRepayAllowance = Number(zbtcRepayAllowance) > Number(repayBtcAmount)
         const hasAllowances = hasDAIAllowance && hasZBTCAllowance
 
         const canBorrow = Number(borrowAmount) > 0.00010001
@@ -356,7 +366,7 @@ class App extends React.Component {
                           placeholder='DAI Amount'
                           onChange={(event) => {
                               const amt = event.target.value
-                              const btcAmt = Number((amt / 10000) * 0.66).toFixed(6)
+                              const btcAmt = Number((amt / 10000) * 0.5).toFixed(6)
                               store.set('repayAmount', amt)
                               store.set('repayBtcAmount', btcAmt)
 
@@ -386,13 +396,20 @@ class App extends React.Component {
                           inputProps={{ 'aria-label': 'bare' }}/>
                   </Grid>
                   <Grid item xs={12}>
-                      {!hasDAIAllowance && walletDataLoaded ? <Button disabled={daiAllowanceRequesting}
+                      {!hasZBTCRepayAllowance && walletDataLoaded ? <Button disabled={zbtcRepayAllowanceRequesting}
+                          size='large'
+                          variant="contained"
+                          className={classes.button}
+                          color="primary"
+                          onClick={this.allowZbtcRepay.bind(this)}>
+                          {zbtcRepayAllowanceRequesting ? 'Requesting...' : 'Set zBTC repay allowance (1/2)'}
+                      </Button> : !hasDAIAllowance && walletDataLoaded ? <Button disabled={daiAllowanceRequesting}
                           size='large'
                           variant="contained"
                           className={classes.button}
                           color="primary"
                           onClick={this.allowDai.bind(this)}>
-                          {daiAllowanceRequesting ? 'Requesting...' : 'Set DAI allowance'}
+                          {daiAllowanceRequesting ? 'Requesting...' : 'Set DAI repay allowance (2/2)'}
                       </Button> : <Button disabled={!canRepay} size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
                         Repay
                     </Button>}

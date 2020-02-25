@@ -65,9 +65,11 @@ export const updateWalletData = async function() {
 
     const daiAllowance = await getDAIAllowance.bind(this)()
     const zbtcAllowance = await getZBTCAllowance.bind(this)()
+    const zbtcRepayAllowance = await getZBTCRepayAllowance.bind(this)()
 
     store.set('daiAllowance', daiAllowance)
     store.set('zbtcAllowance', zbtcAllowance)
+    store.set('zbtcRepayAllowance', zbtcRepayAllowance)
 }
 
 export const getZBTCAllowance = async function() {
@@ -75,6 +77,17 @@ export const getZBTCAllowance = async function() {
     const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
     try {
         return await contract.methods.allowance(walletAddress, DIRECT_PROXY_ADDRESS).call()
+    } catch(e) {
+        console.log(e)
+        return ''
+    }
+}
+
+export const getZBTCRepayAllowance = async function() {
+    const { walletAddress, web3 } = this.props.store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
+    try {
+        return await contract.methods.allowance(walletAddress, PROXY_ADDRESS).call()
     } catch(e) {
         console.log(e)
         return ''
@@ -106,6 +119,23 @@ export const setZBTCAllowance = async function() {
     } catch(e) {
         console.log(e)
         store.set('zbtcAllowanceRequesting', false)
+    }
+}
+
+export const setZBTCRepayAllowance = async function() {
+    const store = this.props.store
+    const { walletAddress, web3 } = store.getState()
+    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
+    store.set('zbtcRepayAllowanceRequesting', true)
+    try {
+        await contract.methods.approve(PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
+            from: walletAddress
+        })
+        await updateWalletData.bind(this)();
+        store.set('zbtcRepayAllowanceRequesting', false)
+    } catch(e) {
+        console.log(e)
+        store.set('zbtcRepayAllowanceRequesting', false)
     }
 }
 
