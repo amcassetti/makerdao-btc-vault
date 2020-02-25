@@ -158,15 +158,14 @@ export const setDAIAllowance = async function() {
 
 export const burnDai = async function() {
     const { store } = this.props
-    const { repayAmount, walletAddress, web3 } = this.props.store.getState()
-    const repayBTCAmount = '0.002'
-    console.log('burnDai', repayAmount, repayBTCAmount)
+    const { repayAmount, repayBtcAmount, walletAddress, web3 } = this.props.store.getState()
+    console.log('burnDai', repayAmount, repayBtcAmount)
     const contract = new web3.eth.Contract(PROXY_ABI, PROXY_ADDRESS)
     const result = await contract.methods.burnDai(
-        // web3.utils.toWei(repayBTCAmount),
-        // web3.utils.toWei(repayAmount),
-        '14000',
-        '1000000000000000000'
+        String(Math.round(Number(repayBtcAmount) * (10 ** 8))),
+        web3.utils.toWei(repayAmount),
+        // '14000',
+        // '1000000000000000000'
     ).send({
         from: walletAddress
     })
