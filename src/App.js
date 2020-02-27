@@ -21,9 +21,7 @@ import { withTheme, withStyles, ThemeProvider } from '@material-ui/core/styles';
 import { createStore, withStore } from '@spyna/react-store'
 
 import {
-    setZBTCAllowance,
     setDAIAllowance,
-    setZBTCRepayAllowance,
     updateWalletData,
     initMonitoring,
     initDeposit,
@@ -229,14 +227,6 @@ class App extends React.Component {
         burnDai.bind(this)()
     }
 
-    async allowZbtc() {
-        setZBTCAllowance.bind(this)()
-    }
-
-    async allowZbtcRepay() {
-        setZBTCRepayAllowance.bind(this)()
-    }
-
     async allowDai() {
         setDAIAllowance.bind(this)()
     }
@@ -262,9 +252,6 @@ class App extends React.Component {
         const deposit = deposits[0]
 
         const hasDAIAllowance = Number(daiAllowance) > Number(repayAmount)
-        const hasZBTCAllowance = Number(zbtcAllowance) > Number(borrowAmount)
-        const hasZBTCRepayAllowance = Number(zbtcRepayAllowance) > Number(repayBtcAmount)
-        const hasAllowances = hasDAIAllowance && hasZBTCAllowance
 
         const canBorrow = Number(borrowAmount) > 0.00010001
         const canRepay = Number(repayBtcAmount) > 0.00010001
@@ -307,7 +294,6 @@ class App extends React.Component {
                 {selectedTab === 0 && !deposits.length && <Grid className={classes.section} container>
                       <Grid item xs={12}>
                           <TextField
-                              disabled={!hasZBTCAllowance}
                               className={classes.inputField}
                               variant="outlined"
                               placeholder='BTC Deposit Amount'
@@ -345,16 +331,15 @@ class App extends React.Component {
                               inputProps={{ 'aria-label': 'bare' }}/>
                       </Grid>
                       <Grid item xs={12}>
-                        {!hasZBTCAllowance && walletDataLoaded ? <Button disabled={zbtcAllowanceRequesting}
-                            size='large'
-                            variant="contained"
-                            className={classes.button}
-                            color="primary"
-                            onClick={this.allowZbtc.bind(this)}>
-                            {zbtcAllowanceRequesting ? 'Requesting...' : 'Set zBTC allowance'}
-                        </Button> : <Button disabled={!canBorrow} size='large' fullWidth variant="contained" className={classes.button} color="primary" onClick={this.borrow.bind(this)}>
+                          <Button
+                              disabled={!canBorrow}
+                              size='large'
+                              fullWidth variant="contained"
+                              className={classes.button}
+                              color="primary"
+                              onClick={this.borrow.bind(this)}>
                             Borrow
-                        </Button>}
+                        </Button>
                       </Grid>
                 </Grid>}
                 {selectedTab === 1 && <Grid className={classes.section} container>
@@ -396,14 +381,7 @@ class App extends React.Component {
                           inputProps={{ 'aria-label': 'bare' }}/>
                   </Grid>
                   <Grid item xs={12}>
-                      {!hasZBTCRepayAllowance && walletDataLoaded ? <Button disabled={zbtcRepayAllowanceRequesting}
-                          size='large'
-                          variant="contained"
-                          className={classes.button}
-                          color="primary"
-                          onClick={this.allowZbtcRepay.bind(this)}>
-                          {zbtcRepayAllowanceRequesting ? 'Requesting...' : 'Set zBTC repay allowance (1/2)'}
-                      </Button> : !hasDAIAllowance && walletDataLoaded ? <Button disabled={daiAllowanceRequesting}
+                      {!hasDAIAllowance && walletDataLoaded ? <Button disabled={daiAllowanceRequesting}
                           size='large'
                           variant="contained"
                           className={classes.button}

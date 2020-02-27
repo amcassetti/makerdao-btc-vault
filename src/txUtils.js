@@ -5,8 +5,8 @@ import Web3 from "web3";
 import PROXY_ABI from './proxyABI.json'
 import ERC_ABI from './daiABI.json'
 
-export const PROXY_ADDRESS = '0x572600ceb7a065d64f7f318b3f33e26692272e16'
-export const DIRECT_PROXY_ADDRESS = '0x73b06373d8f653f981ac7c551c1bae0b32e5b5ea'
+export const PROXY_ADDRESS = '0xf026B91Eb32fE6e2F3FcFb3081715723E1983e48'
+export const DIRECT_PROXY_ADDRESS = '0xCb56D0859fD0aE5D9e7F13636b4Bb78936ddA2f8'
 export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
 export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
 
@@ -59,83 +59,22 @@ export const updateWalletData = async function() {
     }
 
     const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS);
-    const balance = await contract.methods.balanceOf(walletAddress).call();
 
+    const balance = await contract.methods.balanceOf(walletAddress).call();
     store.set('balance', Number(web3.utils.fromWei(balance)).toFixed(6))
 
     const daiAllowance = await getDAIAllowance.bind(this)()
-    const zbtcAllowance = await getZBTCAllowance.bind(this)()
-    const zbtcRepayAllowance = await getZBTCRepayAllowance.bind(this)()
-
     store.set('daiAllowance', daiAllowance)
-    store.set('zbtcAllowance', zbtcAllowance)
-    store.set('zbtcRepayAllowance', zbtcRepayAllowance)
-}
-
-export const getZBTCAllowance = async function() {
-    const { walletAddress, web3 } = this.props.store.getState()
-    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
-    try {
-        return await contract.methods.allowance(walletAddress, DIRECT_PROXY_ADDRESS).call()
-    } catch(e) {
-        console.log(e)
-        return ''
-    }
-}
-
-export const getZBTCRepayAllowance = async function() {
-    const { walletAddress, web3 } = this.props.store.getState()
-    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
-    try {
-        return await contract.methods.allowance(walletAddress, PROXY_ADDRESS).call()
-    } catch(e) {
-        console.log(e)
-        return ''
-    }
 }
 
 export const getDAIAllowance = async function() {
     const { walletAddress, web3 } = this.props.store.getState()
     const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS)
     try {
-        return await contract.methods.allowance(walletAddress, DIRECT_PROXY_ADDRESS).call()
+        return await contract.methods.allowance(walletAddress, PROXY_ADDRESS).call()
     } catch(e) {
         console.log(e)
         return ''
-    }
-}
-
-export const setZBTCAllowance = async function() {
-    const store = this.props.store
-    const { walletAddress, web3 } = store.getState()
-    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
-    store.set('zbtcAllowanceRequesting', true)
-    try {
-        await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
-            from: walletAddress
-        })
-        await updateWalletData.bind(this)();
-        store.set('zbtcAllowanceRequesting', false)
-    } catch(e) {
-        console.log(e)
-        store.set('zbtcAllowanceRequesting', false)
-    }
-}
-
-export const setZBTCRepayAllowance = async function() {
-    const store = this.props.store
-    const { walletAddress, web3 } = store.getState()
-    const contract = new web3.eth.Contract(ERC_ABI, ZBTC_ADDRESS)
-    store.set('zbtcRepayAllowanceRequesting', true)
-    try {
-        await contract.methods.approve(PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
-            from: walletAddress
-        })
-        await updateWalletData.bind(this)();
-        store.set('zbtcRepayAllowanceRequesting', false)
-    } catch(e) {
-        console.log(e)
-        store.set('zbtcRepayAllowanceRequesting', false)
     }
 }
 
@@ -145,7 +84,7 @@ export const setDAIAllowance = async function() {
     const contract = new web3.eth.Contract(ERC_ABI, DAI_ADDRESS)
     store.set('daiAllowanceRequesting', true)
     try {
-        return await contract.methods.approve(DIRECT_PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
+        return await contract.methods.approve(PROXY_ADDRESS, web3.utils.toWei('1000000')).send({
             from: walletAddress
         })
         await updateWalletData.bind(this)();
