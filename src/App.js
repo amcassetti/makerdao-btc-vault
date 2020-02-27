@@ -351,7 +351,7 @@ class App extends React.Component {
                           placeholder='DAI Amount'
                           onChange={(event) => {
                               const amt = event.target.value
-                              const btcAmt = Number((amt / 10000) * 0.5).toFixed(6)
+                              const btcAmt = Number((amt / 10000) * 0.66).toFixed(6)
                               store.set('repayAmount', amt)
                               store.set('repayBtcAmount', btcAmt)
 
@@ -387,7 +387,7 @@ class App extends React.Component {
                           className={classes.button}
                           color="primary"
                           onClick={this.allowDai.bind(this)}>
-                          {daiAllowanceRequesting ? 'Requesting...' : 'Set DAI repay allowance (2/2)'}
+                          {daiAllowanceRequesting ? 'Requesting...' : 'Set DAI repay allowance'}
                       </Button> : <Button disabled={!canRepay} size='large' variant="contained" className={classes.button} color="primary" onClick={this.repay.bind(this)}>
                         Repay
                     </Button>}
