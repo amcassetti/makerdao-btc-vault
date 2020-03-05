@@ -104,6 +104,12 @@ const styles = () => ({
         '& button': {
             marginBottom: theme.spacing(2)
         }
+    },
+    error: {
+        paddingTop: theme.spacing(4),
+        paddingLeft: theme.spacing(2),
+        paddingRight: theme.spacing(2),
+        textAlign: 'center'
     }
 })
 
@@ -116,7 +122,10 @@ const initialState = {
     'zbtcRepayAllowance': '',
     'zbtcRepayAllowanceRequesting': false,
     'web3': null,
+    'walletConnected': false,
+    'walletNetwork': '',
     'walletDataLoaded': false,
+    'showWalletError': false,
     'walletType': '',
     'walletAddress': '',
     'transactions': [],
@@ -175,6 +184,7 @@ class App extends React.Component {
                 // Request account access
                 await window.ethereum.enable();
             } catch (error) {
+                store.set('showWalletError', true)
                 // User denied account access...
                 // console.error("User denied account access")
             }
@@ -185,21 +195,21 @@ class App extends React.Component {
         }
         // If no injected web3 instance is detected, fall back to Ganache
         else {
-            this.log("Please install MetaMask!");
+            return store.set('showWalletError', true)
         }
 
         const web3 = new Web3(web3Provider);
         const walletType = 'browser'
         const accounts = await web3.eth.getAccounts()
+        const network = web3.currentProvider.networkVersion
 
-        await window.ethereum.enable();
+        console.log(web3.currentProvider.networkVersion)
+
         store.set('web3', web3)
         store.set('walletType', walletType)
         store.set('walletAddress', accounts[0])
         store.set('accounts', accounts)
-
-        window.ethereum.on('accountsChanged', (accounts) => {
-        })
+        store.set('showWalletError', network !== '42')
     }
 
     async borrow() {
@@ -234,6 +244,7 @@ class App extends React.Component {
     render(){
         const { classes, store } = this.props
         const {
+            web3,
             borrowAmount,
             repayAmount,
             repayBtcAmount,
@@ -241,10 +252,7 @@ class App extends React.Component {
             balance,
             daiAllowance,
             daiAllowanceRequesting,
-            zbtcAllowance,
-            zbtcAllowanceRequesting,
-            zbtcRepayAllowance,
-            zbtcRepayAllowanceRequesting,
+            showWalletError,
             walletDataLoaded,
             transactions
         } = store.getState()
@@ -253,13 +261,16 @@ class App extends React.Component {
 
         const hasDAIAllowance = Number(daiAllowance) > Number(repayAmount)
 
-        const canBorrow = Number(borrowAmount) > 0.00010001
-        const canRepay = Number(repayBtcAmount) > 0.00010001
+        const canBorrow = !showWalletError && Number(borrowAmount) > 0.00010001
+        const canRepay = !showWalletError && Number(repayBtcAmount) > 0.00010001
 
         console.log(store.getState())
 
         return <ThemeProvider theme={theme}><Container maxWidth="xs">
             <div className={classes.container}>
+                {showWalletError && <Grid item xs={12} className={classes.error}>
+                    {web3 ? 'Please set your wallet to the kovan network.' : 'Please use a web3 enabled browser.'}
+                </Grid>}
                 <Grid item xs={12} className={classes.header}>
                     <img src={DaiLogo} />
                     <p className={classes.balance}>{balance} DAI</p>
