@@ -5,9 +5,12 @@ import Web3 from "web3";
 import PROXY_ABI from './proxyABI.json'
 import ERC_ABI from './daiABI.json'
 
-export const PROXY_ADDRESS = '0xf026B91Eb32fE6e2F3FcFb3081715723E1983e48'
-export const DIRECT_PROXY_ADDRESS = '0xCb56D0859fD0aE5D9e7F13636b4Bb78936ddA2f8'
-export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
+// export const PROXY_ADDRESS = '0xf026B91Eb32fE6e2F3FcFb3081715723E1983e48'
+// export const DIRECT_PROXY_ADDRESS = '0xCb56D0859fD0aE5D9e7F13636b4Bb78936ddA2f8'
+// export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
+export const PROXY_ADDRESS = '0x40f41fd6f5fb0dd1bf7e05e3a07a2ac56ac6fe11'
+export const DIRECT_PROXY_ADDRESS = '0x9eb0580318ea2ef2889377fabe1b48fc95d43217'
+export const WBTC_ADDRESS = '0x7419f744bBF35956020C1687fF68911cD777f865'
 export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
 
 
@@ -103,6 +106,7 @@ export const burnDai = async function() {
     const result = await contract.methods.burnDai(
         String(Math.round(Number(repayBtcAmount) * (10 ** 8))),
         web3.utils.toWei(repayAmount),
+        web3.utils.toWei('0')
         // '14000',
         // '1000000000000000000'
     ).send({
@@ -124,11 +128,14 @@ export const completeDeposit = async function(tx) {
 
     updateTx(store, Object.assign(tx, { awaiting: 'eth-settle' }))
 
+    const utxoAmount = renResponse.autogen.amount
+
     try {
         const result = await adapterContract.methods.mintDai(
             params.contractCalls[0].contractParams[1].value,
             params.contractCalls[0].contractParams[2].value,
-            params.sendAmount,
+            params.contractCalls[0].contractParams[3].value,
+            utxoAmount,
             renResponse.autogen.nhash,
             renSignature
         ).send({
@@ -171,7 +178,7 @@ export const initShiftIn = function(tx) {
             },
             {
                 name: "_dart",
-                type: "int",
+                type: "uint256",
                 value: web3.utils.toWei(daiAmount),
             },
             {
@@ -179,11 +186,16 @@ export const initShiftIn = function(tx) {
                 type: "bytes",
                 value: web3.utils.fromAscii(btcAddress),
             },
+            {
+                name: "_minWbtcAmount",
+                type: "uint256",
+                value: web3.utils.toWei('0'),
+            },
         ],
         nonce: params && params.nonce ? params.nonce : RenSDK.utils.randomNonce()
     }
 
-    const shiftIn = sdk.shiftIn(data)
+    const shiftIn = sdk.lockAndMint(data)
 
     return shiftIn
 }
@@ -218,13 +230,13 @@ export const initDeposit = async function(tx) {
         if (!params) {
             addTx(store, Object.assign(tx, {
                 params: shiftIn.params,
-                renBtcAddress: shiftIn.addr()
+                renBtcAddress: await shiftIn.gatewayAddress()
             }))
         }
 
         // wait for btc
         const deposit = await shiftIn
-            .waitForDeposit(2)
+            .wait(2)
             .on("deposit", dep => {
                 console.log('on deposit', dep)
                 if (dep.utxo) {
@@ -232,12 +244,14 @@ export const initDeposit = async function(tx) {
                         updateTx(store, Object.assign(tx, {
                             awaiting: 'btc-settle',
                             btcConfirmations: dep.utxo.confirmations,
-                            btcTxHash: dep.utxo.txid
+                            btcTxHash: dep.utxo.txHash,
+                            btcTxVOut: dep.utxo.vOut
                         }))
                     } else {
                         updateTx(store, Object.assign(tx, {
                             btcConfirmations: dep.utxo.confirmations,
-                            btcTxHash: dep.utxo.txid
+                            btcTxHash: dep.utxo.txHash,
+                            btcTxVOut: dep.utxo.vOut
                         }))
                     }
                 }
@@ -248,9 +262,9 @@ export const initDeposit = async function(tx) {
         updateTx(store, Object.assign(tx, { awaiting: 'ren-settle' }))
 
         try {
-            const signature = await deposit.submitToRenVM();
+            const signature = await deposit.submit();
             updateTx(store, Object.assign(tx, {
-                renResponse: signature.response,
+                renResponse: signature.renVMResponse,
                 renSignature: signature.signature
             }))
 

@@ -310,7 +310,9 @@ class App extends React.Component {
                               placeholder='BTC Deposit Amount'
                               onChange={(event) => {
                                   const amt = event.target.value
-                                  const daiAmt = Number((amt * 10000) * 0.66).toFixed(2)
+                                  const fee = (amt * 0.001) + 0.00005
+                                  const net = Number(amt - fee)
+                                  const daiAmt = Number((net * 9000) * 0.3).toFixed(2)
                                   store.set('borrowAmount', amt)
                                   store.set('borrowDaiAmount', daiAmt)
                                   this.borrowDaiRef.current.value = daiAmt
