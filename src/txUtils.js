@@ -8,10 +8,16 @@ import ERC_ABI from './daiABI.json'
 // export const PROXY_ADDRESS = '0xf026B91Eb32fE6e2F3FcFb3081715723E1983e48'
 // export const DIRECT_PROXY_ADDRESS = '0xCb56D0859fD0aE5D9e7F13636b4Bb78936ddA2f8'
 // export const ZBTC_ADDRESS = '0xc6069E8DeA210C937A846db2CEbC0f58ca111f26'
-export const PROXY_ADDRESS = '0x40f41fd6f5fb0dd1bf7e05e3a07a2ac56ac6fe11'
-export const DIRECT_PROXY_ADDRESS = '0x9eb0580318ea2ef2889377fabe1b48fc95d43217'
-export const WBTC_ADDRESS = '0x7419f744bBF35956020C1687fF68911cD777f865'
-export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
+
+// export const PROXY_ADDRESS = '0x40f41fd6f5fb0dd1bf7e05e3a07a2ac56ac6fe11'
+// export const DIRECT_PROXY_ADDRESS = '0x9eb0580318ea2ef2889377fabe1b48fc95d43217'
+// export const WBTC_ADDRESS = '0x7419f744bBF35956020C1687fF68911cD777f865'
+// export const DAI_ADDRESS = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa'
+
+export const PROXY_ADDRESS = '0xc633576775ab431ff627746d2c4af6686c4c719c'
+export const DIRECT_PROXY_ADDRESS = '0xbc20e022955344fd9c8ff03c20d69a5ba21bec23'
+export const WBTC_ADDRESS = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'
+export const DAI_ADDRESS = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 
 
 export const addTx = (store, tx) => {
@@ -68,6 +74,16 @@ export const updateWalletData = async function() {
 
     const daiAllowance = await getDAIAllowance.bind(this)()
     store.set('daiAllowance', daiAllowance)
+
+    try {
+        const btc = await fetch(`https://api.coincap.io/v2/assets/bitcoin`, {
+            method: 'GET',
+        })
+
+        store.set('btcusd', (await btc.json()).data.priceUsd)
+    } catch(e) {
+        console.log(e)
+    }
 }
 
 export const getDAIAllowance = async function() {
