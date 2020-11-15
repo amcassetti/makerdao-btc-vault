@@ -1,6 +1,7 @@
 import React from 'react';
 import Web3 from 'web3';
 import RenSDK from "@renproject/ren";
+import AddressValidator from "wallet-address-validator";
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Container from '@material-ui/core/Container';
@@ -129,10 +130,12 @@ const initialState = {
     'accounts': [],
     'borrowAmount': '',
     'borrowDaiAmount': '',
-    'borrowBtcAddress': '2NGZrVvZG92qGYqzTLjCAewvPZ7JE8S8VxE',
+    'borrowBtcAddress': '',
+    'borrowBtcAddressValid': false,
     'repayAmount': '',
     'repayBtcAmount': '',
-    'repayAddress': ''
+    'repayAddress': '',
+    'btcusd': ''
 }
 
 class App extends React.Component {
@@ -147,7 +150,7 @@ class App extends React.Component {
         window.Web3 = Web3
         const store = this.props.store
 
-        store.set('sdk', new RenSDK('testnet'))
+        store.set('sdk', new RenSDK('mainnet'))
 
         await this.initBrowserWallet.bind(this)()
 
@@ -205,7 +208,7 @@ class App extends React.Component {
         store.set('walletType', walletType)
         store.set('walletAddress', accounts[0])
         store.set('accounts', accounts)
-        store.set('showWalletError', network !== '42')
+        store.set('showWalletError', network !== '1')
     }
 
     async borrow() {
@@ -265,7 +268,7 @@ class App extends React.Component {
         return <ThemeProvider theme={theme}><Container maxWidth="xs">
             <div className={classes.container}>
                 {showWalletError && <Grid item xs={12} className={classes.error}>
-                    {web3 ? 'Please set your wallet to the kovan network.' : 'Please use a web3 enabled browser.'}
+                    {web3 ? 'Please set your wallet to the mainnet network.' : 'Please use a web3 enabled browser.'}
                 </Grid>}
                 <Grid item xs={12} className={classes.header}>
                     <img src={DaiLogo} />
@@ -279,6 +282,8 @@ class App extends React.Component {
                       value={selectedTab}
                       onChange={(event, newValue) => {
                           store.set('selectedTab', newValue)
+                          store.set('borrowBtcAddress', '')
+                          store.set('borrowBtcAddressValid', false)
                       }}
                     >
                       <Tab label="Borrow DAI" icon={<UndoIcon />} />
@@ -306,7 +311,10 @@ class App extends React.Component {
                               placeholder='BTC Deposit Amount'
                               onChange={(event) => {
                                   const amt = event.target.value
-                                  const daiAmt = Number((amt * 10000) * 0.66).toFixed(2)
+                                  const fee = (amt * 0.001) + 0.00005
+                                  const net = Number(amt - fee)
+                                  const price = Number(store.get('btcusd'))
+                                  const daiAmt = Number((net * price) * 0.3).toFixed(2)
                                   store.set('borrowAmount', amt)
                                   store.set('borrowDaiAmount', daiAmt)
                                   this.borrowDaiRef.current.value = daiAmt
@@ -318,8 +326,6 @@ class App extends React.Component {
                                   </InputAdornment>
                               }}
                               inputProps={{ 'aria-label': 'bare' }}/>
-                      </Grid>
-                      <Grid item xs={12}>
                       </Grid>
                       <Grid item xs={12}>
                           <TextField
@@ -336,6 +342,20 @@ class App extends React.Component {
                                   </InputAdornment>
                               }}
                               inputProps={{ 'aria-label': 'bare' }}/>
+                      </Grid>
+                      <Grid item xs={12}>
+                          <TextField
+                              className={classes.inputField}
+                              variant="outlined"
+                              placeholder='Your BTC Address'
+                              onChange={(event) => {
+                                  const value = event.target.value
+                                  store.set('borrowBtcAddress', value)
+                                  store.set('borrowBtcAddressValid', AddressValidator.validate(
+                                    value,
+                                    'BTC'
+                                  ))
+                              }}/>
                       </Grid>
                       <Grid item xs={12}>
                           <Button
@@ -358,7 +378,8 @@ class App extends React.Component {
                           placeholder='DAI Amount'
                           onChange={(event) => {
                               const amt = event.target.value
-                              const btcAmt = Number((amt / 10000) * 0.66).toFixed(6)
+                              const price = Number(store.get('btcusd'))
+                              const btcAmt = Number((amt / price) / 0.3).toFixed(6)
                               store.set('repayAmount', amt)
                               store.set('repayBtcAmount', btcAmt)
 
