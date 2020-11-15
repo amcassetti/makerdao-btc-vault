@@ -1,5 +1,6 @@
 import React from 'react';
 import Web3 from 'web3';
+import GatewayJS from "@renproject/gateway-js";
 import RenSDK from "@renproject/ren";
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
@@ -8,13 +9,15 @@ import Grid from '@material-ui/core/Grid';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import InputAdornment from '@material-ui/core/InputAdornment';
+import LoopIcon from '@material-ui/icons/Loop';
 import UndoIcon from '@material-ui/icons/Undo';
 import RedoIcon from '@material-ui/icons/Redo';
 
 import DaiLogo from './dai-logo.png'
+import ADAPTER_ABI from './proxyABI.json'
 import theme from './theme'
 import TransactionItem from './TransactionItem'
-import { withStyles, ThemeProvider } from '@material-ui/core/styles';
+import { withTheme, withStyles, ThemeProvider } from '@material-ui/core/styles';
 import { createStore, withStore } from '@spyna/react-store'
 
 import {
@@ -24,6 +27,7 @@ import {
     initDeposit,
     removeTx,
     burnDai,
+    DAI_ADDRESS
 } from './txUtils'
 
 const styles = () => ({
