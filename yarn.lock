@@ -2952,9 +2952,10 @@ bitcore-lib-cash@^8.22.2:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitcore-lib-dogecoin@github:CoinSpace/bitcore-lib-dogecoin":
-  version "8.1.1"
-  resolved "https://codeload.github.com/CoinSpace/bitcore-lib-dogecoin/tar.gz/e8314b746eb72666b11db933b30447484c644969"
+bitcore-lib-dogecoin@CoinSpace/bitcore-lib-dogecoin:
+  version "8.1.2"
+  uid cf8b3f663d6f065c12a643d8eb7c9e7b7f516bf1
+  resolved "https://codeload.github.com/CoinSpace/bitcore-lib-dogecoin/tar.gz/cf8b3f663d6f065c12a643d8eb7c9e7b7f516bf1"
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
@@ -2964,8 +2965,9 @@ bitcore-lib-cash@^8.22.2:
     lodash "^4.17.15"
     scryptsy "^2.1.0"
 
-"bitcore-lib-zcash@github:zcash-hackworks/bitcore-lib-zcash":
+bitcore-lib-zcash@zcash-hackworks/bitcore-lib-zcash:
   version "0.13.19"
+  uid e97ae1dd2e9f14d6076d5e5429c75d8965afa4ab
   resolved "https://codeload.github.com/zcash-hackworks/bitcore-lib-zcash/tar.gz/e97ae1dd2e9f14d6076d5e5429c75d8965afa4ab"
   dependencies:
     bn.js "=2.0.4"
@@ -2988,9 +2990,10 @@ bitcore-lib@^8.22.2, bitcore-lib@^8.23.1:
     inherits "=2.0.1"
     lodash "^4.17.20"
 
-"bitgo-utxo-lib@git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e":
+"bitgo-utxo-lib@https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e":
   version "1.9.0"
-  resolved "git+https://github.com/ren-forks/bitgo-utxo-lib.git#7939387dda1199956fcb9d720a9493ce12cf013e"
+  uid "7939387dda1199956fcb9d720a9493ce12cf013e"
+  resolved "https://github.com/ren-forks/bitgo-utxo-lib#7939387dda1199956fcb9d720a9493ce12cf013e"
   dependencies:
     bech32 "0.0.3"
     bigi "^1.4.0"
@@ -6378,9 +6381,9 @@ hoist-non-react-statics@^3.2.1, hoist-non-react-statics@^3.3.2:
     react-is "^16.7.0"
 
 hosted-git-info@^2.1.4:
-  version "2.8.5"
-  resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.8.5.tgz#759cfcf2c4d156ade59b0b2dfabddc42a6b9c70c"
-  integrity sha512-kssjab8CvdXfcXMXVcvsXum4Hwdq9XGtRD3TteMEvEbq0LXyiNQr6AprqKqfeaDXze7SxWvRxdpwE6ku7ikLkg==
+  version "2.8.9"
+  resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.8.9.tgz#dffc0bf9a21c02209090f2aa69429e1414daf3f9"
+  integrity sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==
 
 hpack.js@^2.1.6:
   version "2.1.6"
